@@ -1,0 +1,339 @@
+<div class="calendar-container" >
+  <div class="calendar-header">
+    <button class="nav-button" (click)="previousMonth()">
+      &lt;
+    </button>
+    <h2 class="month-year">
+      {{ monthNames[currentDate.getMonth()] }} {{ currentDate.getFullYear() }}
+    </h2>
+    <button class="nav-button" (click)="nextMonth()">
+      &gt;
+    </button>
+  </div>
+  <div class="calendar-grid">
+    <div class="day-header" *ngFor="let day of daysOfWeek">
+      {{ day }}
+    </div>
+    <div
+      class="day"
+      *ngFor="let i of firstDayOfMonthArray"
+    ></div>
+    <div
+      class="day-button"
+      *ngFor="let day of daysInMonth; let i = index"
+      [ngClass]="{'today': isToday(day), 'selected': isSelected(day)}"
+      (click)="selectDay(day)"
+    >
+      {{ getFormattedDate(day) }}
+      <div class="status-indicators">
+        <span *ngFor="let status of getActivityStatuses(day)" class="status-indicator" [ngClass]="status"></span>
+      </div>
+    </div>
+  </div>
+  <div class="activities-container" *ngIf="selectedDay">
+    <h3>Activities for {{ getFormattedSelectedDate() }}</h3>
+    <div
+      *ngIf="activities[selectedDate.toDateString()] && activities[selectedDate.toDateString()].length > 0; else noActivities"
+    >
+      <div *ngFor="let activity of activities[selectedDate.toDateString()]" class="activity-item">
+        {{ activity.name }}
+        <span class="activity-status" [ngClass]="activity.status">{{ activity.status }}</span>
+      </div>
+    </div>
+    <ng-template #noActivities>
+      <p>No activities for this day.</p>
+    </ng-template>
+    <div class="add-activity">
+      <input type="text" [(ngModel)]="newActivityName" placeholder="Activity Name" />
+      <select [(ngModel)]="newActivityStatus">
+        <option value="pending">Pending</option>
+        <option value="completed">Completed</option>
+        <option value="in-progress">In-Progress</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <button (click)="addActivity()">Add Activity</button>
+    </div>
+    <div class="notes-container" *ngIf="selectedDay">
+      <h3>Notes</h3>
+      <div *ngIf="getNotes(getFormattedSelectedDate()).length > 0; else noNotes">
+        <ul>
+          <li *ngFor="let note of getNotes(getFormattedSelectedDate())">{{ note }}</li>
+        </ul>
+      </div>
+      <ng-template #noNotes>
+        <p>No notes for this day.</p>
+      </ng-template>
+      <div>
+        <input type="text" [(ngModel)]="newNote" placeholder="Add a note"/>
+        <button (click)="onAddNote()">Add Note</button>
+      </div>
+      <div>
+        <div *ngFor="let note of notes[getFormattedSelectedDate()]">{{note}}</div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+```
+scss
+.calendar-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    font-family: sans-serif;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .nav-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  
+    &:hover {
+      background-color: #f0f0f0;
+    }
+  }
+  
+  .month-year {
+    font-size: 1.2em;
+    margin: 0;
+  }
+  
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  
+  .day-header,
+  .day {
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .day-header {
+    font-weight: bold;
+    background-color: #f5f5f5;
+  }
+  
+  .day {
+    &:hover {
+      background-color: #f0f0f0;
+    }
+  
+    &.today {
+      background-color: #e0f5e0;
+    }
+  
+    &.selected {
+      background-color: #d0e0ff;
+    }
+  }
+
+  .status-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin: 1px;
+    display: inline-block;
+  
+    &.completed {
+      background-color: green;
+    }
+  
+    &.pending {
+      background-color: yellow;
+    }
+  
+    &.in-progress {
+      background-color: orange;
+    }
+  
+    &.cancelled {
+      background-color: red;
+    }
+  }
+
+  .activities-container {
+    margin-top: 20px;
+    border-top: 1px solid #ccc;
+    padding-top: 20px;
+  }
+  
+  .activity-item {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #eee;
+  }
+
+  .activity-status {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    color: white;
+  
+    &.completed {
+      background-color: green;
+    }
+  
+    &.pending {
+      background-color: yellow;
+      color: black;
+    }
+  
+    &.in-progress {
+      background-color: orange;
+    }
+  
+    &.cancelled {
+      background-color: red;
+    }
+  }
+
+  .add-activity {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  
+    input, select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  
+    button {
+      background-color: #5cb85c;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+  
+      &:hover {
+        background-color: #4cae4c;
+      }
+    }
+  }
+```
+```typescript
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-calendar',
+  templateUrl: './calendar.component.html',
+  styleUrls: ['./calendar.component.scss']
+})
+export class CalendarComponent {
+  currentDate: Date = new Date();
+  monthNames: string[] = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  daysOfWeek: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  daysInMonth: number[] = [];
+  firstDayOfMonth: number = 0;
+  firstDayOfMonthArray: number[] = [];
+  selectedDay: number | null = null;
+  selectedDate: Date = new Date();
+  activities: { [date: string]: {name: string, status: string}[] } = {};
+  newActivityName: string = '';
+  newActivityStatus: string = 'pending';
+
+  constructor() {
+    this.generateCalendar();
+  }
+
+  generateCalendar() {
+    this.daysInMonth = [];
+    this.firstDayOfMonthArray = [];
+    const year = this.currentDate.getFullYear();
+    const month = this.currentDate.getMonth();
+    const daysInCurrentMonth = new Date(year, month + 1, 0).getDate();
+    this.firstDayOfMonth = new Date(year, month, 1).getDay();
+
+    for (let i = 1; i <= daysInCurrentMonth; i++) {
+      this.daysInMonth.push(i);
+    }
+    for (let i = 0; i < this.firstDayOfMonth; i++) {
+      this.firstDayOfMonthArray.push(i);
+    }
+  }
+
+  previousMonth() {
+    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+    this.generateCalendar();
+  }
+
+  nextMonth() {
+    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+    this.generateCalendar();
+  }
+
+  isToday(day: number): boolean {
+    const today = new Date();
+    return this.currentDate.getFullYear() === today.getFullYear() &&
+      this.currentDate.getMonth() === today.getMonth() &&
+      day === today.getDate();
+  }
+
+  selectDay(day: number) {
+    this.selectedDay = day;
+    this.selectedDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), day);
+  }
+
+  isSelected(day: number): boolean {
+    return this.selectedDay === day;
+  }
+
+  getActivityStatuses(day: number): string[] {
+    const date = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), day);
+    const dateString = date.toDateString();
+    const statuses: string[] = [];
+    if (this.activities[dateString]) {
+      this.activities[dateString].forEach(activity => {
+        statuses.push(activity.status);
+      });
+    }
+    return statuses;
+  }
+
+  addActivity() {
+    if (this.newActivityName.trim() && this.selectedDate) {
+        const dateString = this.selectedDate.toDateString();
+        if (!this.activities[dateString]) {
+            this.activities[dateString] = [];
+        }
+        this.activities[dateString].push({ name: this.newActivityName, status: this.newActivityStatus });
+        this.newActivityName = '';
+        this.newActivityStatus = 'pending';
+    }
+  }
+}
